@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Mengaktifkan selektor .dark untuk Tailwind CSS v4 */
+@variant dark (&:where(.dark, .dark *));
+
+/* Reset background default agar mengikuti Tailwind */
+:root {
+    color-scheme: light dark;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
