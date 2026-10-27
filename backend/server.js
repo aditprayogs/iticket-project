@@ -21,19 +21,31 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static Folder Uploads
+// Static Folder Uploads (Mendukung akses langsung maupun via subpath /iticket-api)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/iticket-api/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes API
-app.use('/api/auth', authRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/analytics', analyticsRoutes);
+// Routes API (Daftarkan ke beberapa variasi path agar fleksibel dengan konfigurasi Coolify)
+const apiRoutes = [
+    { path: '/auth', router: authRoutes },
+    { path: '/tickets', router: ticketRoutes },
+    { path: '/admin', router: adminRoutes },
+    { path: '/reports', router: reportRoutes },
+    { path: '/notifications', router: notificationRoutes },
+    { path: '/analytics', router: analyticsRoutes }
+];
+
+apiRoutes.forEach(({ path: routePath, router }) => {
+    // 1. Standar local / direct (/api/...)
+    app.use(`/api${routePath}`, router);
+    // 2. Subpath Coolify tanpa /api (/iticket-api/...)
+    app.use(`/iticket-api${routePath}`, router);
+    // 3. Subpath Coolify dengan /api (/iticket-api/api/...)
+    app.use(`/iticket-api/api${routePath}`, router);
+});
 
 // Test Route
-app.get('/', (req, res) => {
+app.get(['/', '/iticket-api'], (req, res) => {
     res.json({ message: 'API ITicket Backend Running!' });
 });
 
