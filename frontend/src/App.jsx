@@ -25,8 +25,8 @@ const UnauthorizedPage = () => (
 function App() {
     return (
         <AuthProvider>
-            {/* Tambahkan basename="/iticket" di sini */}
-            <Router basename="/iticket">
+            {/* Router Standar Root */}
+            <Router>
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/login" element={<LoginPage />} />
