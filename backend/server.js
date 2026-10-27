@@ -65,3 +65,13 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`Server backend berjalan di http://localhost:${PORT}`);
 });
+
+// Dengarkan juga di port sekunder (3000 / 5000) agar kompatibel dengan Traefik Coolify di port manapun
+const ALT_PORT = (Number(PORT) === 5000) ? 3000 : 5000;
+try {
+    app.listen(ALT_PORT, () => {
+        console.log(`Server backend juga aktif di http://localhost:${ALT_PORT}`);
+    });
+} catch (err) {
+    console.log(`Port ${ALT_PORT} tidak dapat digunakan:`, err.message);
+}
