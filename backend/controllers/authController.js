@@ -3,8 +3,14 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { logActivity } = require('../utils/logger');
+
 // 1. REGISTER USER
 // backend/controllers/authController.js
+
+// exports.daftar = async (_req, res) => {
+//     const 
+// }
 
 exports.register = async (req, res) => {
     // Biarkan destructuring tanpa mengambil 'role' dari req.body untuk keamanan
@@ -27,6 +33,8 @@ exports.register = async (req, res) => {
             [full_name, username, email, hashedPassword, userRole]
         );
 
+        await logActivity(null, 'AUTH_REGISTER', `Pendaftaran akun baru Employee: ${username} (${email}).`, req);
+
         res.status(201).json({ message: 'Registrasi berhasil!' });
     } catch (error) {
         console.error('Error Register:', error);
@@ -43,27 +51,27 @@ exports.login = async (req, res) => {
     }
 
     try {
-        // Cari user berdasarkan username[cite: 2]
+        // 1. Cari user berdasarkan username
         const [users] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
 
         if (users.length === 0) {
-            return res.status(401).json({ message: 'Kredensial tidak valid' }); // Pesan umum untuk keamanan
+            return res.status(401).json({ message: 'Kredensial tidak valid' });
         }
 
         const user = users[0];
 
-        // Cek status aktif user[cite: 2]
+        // 2. Cek status aktif user
         if (!user.is_active) {
             return res.status(403).json({ message: 'Akun Anda telah dinonaktifkan' });
         }
 
-        // Verifikasi password
+        // 3. Verifikasi password terlebih dahulu!
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ message: 'Kredensial tidak valid' });
         }
 
-        // Buat JWT Token
+        // 4. Siapkan payload JWT
         const payload = {
             id: user.id,
             full_name: user.full_name,
@@ -71,6 +79,10 @@ exports.login = async (req, res) => {
             role: user.role
         };
 
+        // 5. CATAT LOG SETELAH PASSWORD DIPASTIKAN BENAR
+        await logActivity(user.id, 'AUTH_LOGIN', `User ${user.username} (${user.role}) berhasil login.`, req);
+
+        // 6. Buat JWT Token
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
             expiresIn: process.env.JWT_EXPIRES_IN || '1d'
         });

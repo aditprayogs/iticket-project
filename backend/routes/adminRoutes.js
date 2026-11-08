@@ -10,6 +10,11 @@ router.use(authorizeRoles('Admin'));
 // Stats
 router.get('/stats', adminController.getAdminStats);
 
+// Audit Logs
+router.get('/audit-logs', verifyToken, authorizeRoles('Admin'), adminController.getAuditLogs);
+
+router.get('/audit-logs', verifyToken, authorizeRoles('Admin'), adminController.getAuditLogs);
+
 // Users CRUD
 router.get('/users', adminController.getUsers);
 router.post('/users', adminController.createUser);

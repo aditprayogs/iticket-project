@@ -1,5 +1,6 @@
 // backend/controllers/ticketController.js
 const db = require('../config/db');
+const { logActivity } = require('../utils/logger');
 
 // Helper untuk format nomor ticket unik TCK-YYYYMMDD-XXXX
 const generateTicketNumber = async () => {
@@ -41,6 +42,13 @@ exports.createTicket = async (req, res) => {
         );
 
         const newTicketId = result.insertId;
+
+        await logActivity(
+        reporter_id, 
+        'CREATE_TICKET', 
+        `Membuat tiket #${ticket_number}: "${title}" (Prioritas: ${priority || 'Low'})`, 
+        req
+        );
 
         // 2. Ambil Semua User Ber-role 'IT Support' atau 'Admin'
         const [supportUsers] = await db.query(
@@ -182,6 +190,7 @@ exports.updateTicketStatus = async (req, res) => {
         const currentTicket = tickets[0];
         let updateFields = [];
         let queryParams = [];
+        let logDetails = [];
 
         if (status) {
             if (status === 'Resolved' && (!resolution_notes || resolution_notes.trim() === '')) {
@@ -190,6 +199,7 @@ exports.updateTicketStatus = async (req, res) => {
 
             updateFields.push('status = ?');
             queryParams.push(status);
+            logDetails.push(`Status: ${status}`);
 
             if (status === 'In Progress' && !currentTicket.started_at) {
                 updateFields.push('started_at = NOW()');
@@ -212,6 +222,7 @@ exports.updateTicketStatus = async (req, res) => {
         if (priority) {
             updateFields.push('priority = ?');
             queryParams.push(priority);
+            logDetails.push(`Prioritas: ${priority}`);
         }
 
         if (updateFields.length === 0) {
@@ -221,7 +232,15 @@ exports.updateTicketStatus = async (req, res) => {
         queryParams.push(id);
         await db.query(`UPDATE tickets SET ${updateFields.join(', ')} WHERE id = ?`, queryParams);
 
-        // Kirim Notifikasi ke Pelapor (Reporter) saat Status Berubah
+        // 1. AUDIT LOG (Gunakan currentTicket dan buat deskripsi fleksibel)
+        await logActivity(
+            actor_id, 
+            'UPDATE_TICKET', 
+            `Memperbarui tiket #${currentTicket.ticket_number} (${logDetails.join(', ') || 'Update Data'})`, 
+            req
+        );
+
+        // 2. Kirim Notifikasi ke Pelapor (Reporter) saat Status Berubah
         if (status && status !== currentTicket.status) {
             await db.query(
                 `INSERT INTO notifications (user_id, ticket_id, title, message) VALUES (?, ?, ?, ?)`,

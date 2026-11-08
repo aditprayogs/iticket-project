@@ -29,6 +29,13 @@ exports.createUser = async (req, res) => {
             [full_name, username, email, password_hash, role]
         );
 
+        await logActivity(
+        req.user.id, 
+        'ADMIN_CREATE_USER', 
+        `Menambahkan akun user baru: ${username} (Role: ${role})`, 
+        req
+    );
+
         res.status(201).json({ message: 'Pengguna berhasil ditambahkan' });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -94,6 +101,13 @@ exports.createCategory = async (req, res) => {
 
     try {
         await db.query('INSERT INTO categories (name, description) VALUES (?, ?)', [name, description]);
+
+        await logActivity(
+            req.user.id, 
+            'ADMIN_CREATE_CATEGORY', 
+            `Menambahkan kategori masalah baru: "${name}"`, 
+            req
+        );
         res.status(201).json({ message: 'Kategori berhasil ditambahkan' });
     } catch (error) {
         res.status(500).json({ message: 'Gagal menambahkan kategori' });
@@ -136,6 +150,13 @@ exports.createAsset = async (req, res) => {
             'INSERT INTO assets (asset_code, name, category, serial_number, user_id) VALUES (?, ?, ?, ?, ?)',
             [asset_code, name, category, serial_number, user_id || null]
         );
+
+        await logActivity(
+            req.user.id, 
+            'ADMIN_CREATE_ASSET', 
+            `Menambahkan data aset baru: ${name} (${asset_code})`, 
+            req
+        );
         res.status(201).json({ message: 'Aset berhasil ditambahkan' });
     } catch (error) {
         res.status(500).json({ message: 'Gagal menambahkan aset' });
@@ -163,5 +184,30 @@ exports.getAdminStats = async (req, res) => {
         res.json({ totalTickets, totalUsers, totalCategories, totalAssets });
     } catch (error) {
         res.status(500).json({ message: 'Gagal mengambil data statistik' });
+    }
+};
+
+exports.getAuditLogs = async (req, res) => {
+    try {
+        const [logs] = await db.query(`
+            SELECT 
+                a.id,
+                a.action,
+                a.description,
+                a.ip_address,
+                a.created_at,
+                u.full_name,
+                u.username,
+                u.role
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.id
+            ORDER BY a.created_at DESC
+            LIMIT 100
+        `);
+
+        res.json(logs);
+    } catch (error) {
+        console.error('Error Get Audit Logs:', error);
+        res.status(500).json({ message: 'Gagal mengambil data audit log' });
     }
 };
