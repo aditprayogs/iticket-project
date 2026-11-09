@@ -13,7 +13,7 @@ import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import UsersPage from './pages/admin/UsersPage';
 import CategoriesPage from './pages/admin/CategoriesPage';
 import AssetsPage from './pages/admin/AssetsPage';
-
+import AuditLogPage from './pages/AuditLogPage';
 
 const UnauthorizedPage = () => (
     <div className="min-h-screen w-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 p-8">
@@ -50,6 +50,7 @@ function App() {
                             <Route path="/admin/users" element={<UsersPage />} />
                             <Route path="/admin/categories" element={<CategoriesPage />} />
                             <Route path="/admin/assets" element={<AssetsPage />} />
+                            <Route path="/admin/audit-logs" element={<AuditLogPage />} />
                         </Route>
                         <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
                         <Route path="/support/analytics" element={<AnalyticsDashboard />} />

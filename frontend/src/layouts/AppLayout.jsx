@@ -22,6 +22,7 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
+    ShieldCheck,
 } from 'lucide-react';
 
 const AppLayout = () => {
@@ -140,6 +141,7 @@ const AppLayout = () => {
                 { label: 'Manajemen User', path: '/admin/users', icon: <Users size={18} /> },
                 { label: 'Kategori Masalah', path: '/admin/categories', icon: <FolderTree size={18} /> },
                 { label: 'Data Aset', path: '/admin/assets', icon: <HardDrive size={18} /> },
+                { label: 'Audit Logs', path: '/admin/audit-logs', icon: <ShieldCheck size={18} /> },
             ];
         }
 
