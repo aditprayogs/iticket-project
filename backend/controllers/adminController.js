@@ -77,13 +77,44 @@ exports.updateUserStatus = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
     const { id } = req.params;
+
+    // 1. Cegah Admin menghapus akunnya sendiri
+    if (Number(id) === Number(req.user.id)) {
+        return res.status(400).json({ message: 'Anda tidak dapat menghapus akun Anda sendiri.' });
+    }
+
     try {
+        // 2. Cek apakah user yang ingin dihapus benar-benar ada
+        const [targetUser] = await db.query("SELECT role, is_active FROM users WHERE id = ?", [id]);
+        if (targetUser.length === 0) {
+            return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+        }
+
+        // 3. Pastikan minimal masih ada 1 Admin aktif tersisa di sistem
+        if (targetUser[0].role === 'Admin' && targetUser[0].is_active === 1) {
+            const [admins] = await db.query("SELECT COUNT(*) AS total FROM users WHERE role = 'Admin' AND is_active = 1");
+            if (admins[0].total <= 1) {
+                return res.status(400).json({ message: 'Gagal: Sistem wajib memiliki minimal 1 akun Admin aktif.' });
+            }
+        }
+
+        // 4. Eksekusi penghapusan
         await db.query('DELETE FROM users WHERE id = ?', [id]);
-        res.json({ message: 'Pengguna berhasil dihapus' });
+        res.json({ message: 'Pengguna berhasil dihapus.' });
+
     } catch (error) {
-        res.status(500).json({ message: 'Gagal menghapus pengguna (User terkait dengan tiket)' });
+        // Tangkap khusus error relasi Foreign Key di MySQL / TiDB
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ 
+                message: 'Gagal menghapus pengguna karena akun ini masih terhubung dengan data tiket atau riwayat aktivitas.' 
+            });
+        }
+        
+        console.error('Error deleteUser:', error);
+        res.status(500).json({ message: 'Terjadi kesalahan pada server saat menghapus pengguna.' });
     }
 };
+
 
 // ==================== MANAGEMENT CATEGORIES ====================
 exports.getCategories = async (req, res) => {
@@ -211,3 +242,19 @@ exports.getAuditLogs = async (req, res) => {
         res.status(500).json({ message: 'Gagal mengambil data audit log' });
     }
 };
+
+exports.toggleUserStatus = async (req, res) => {
+    const { id } = req.params;
+
+    // Cegah Admin menonaktifkan dirinya sendiri
+    if (Number(id) === Number(req.user.id)) {
+        return res.status(400).json({ message: 'Anda tidak dapat menonaktifkan akun Anda sendiri.' });
+    }
+
+    try {
+        // ... lanjutkan proses update status user ...
+    } catch (error) {
+        res.status(500).json({ message: 'Gagal mengubah status user' });
+    }
+};
+

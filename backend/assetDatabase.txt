@@ -1,0 +1,35 @@
+HOST:
+
+gateway01.ap-southeast-1.prod.aws.tidbcloud.com
+
+PORT:
+
+4000
+
+USERNAME:
+
+q3cwFDyJiJPAC1t.root
+
+PASSWORD:
+
+mm5RjpHFXak74mMo
+
+DATABASE:
+
+sys
+
+CA:
+
+<CA_PATH>
+
+
+Cloud name	
+u8kvhz3w
+API key	
+748323873614784
+API secret	
+JVkQznCJzcnXxX3EafnWaeaemuw
+
+API environment variable	
+CLOUDINARY_URL=cloudinary://748323873614784:JVkQznCJzcnXxX3EafnWaeaemuw@u8kvhz3w
+

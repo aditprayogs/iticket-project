@@ -13,7 +13,7 @@ router.get('/stats', adminController.getAdminStats);
 // Audit Logs
 router.get('/audit-logs', verifyToken, authorizeRoles('Admin'), adminController.getAuditLogs);
 
-router.get('/audit-logs', verifyToken, authorizeRoles('Admin'), adminController.getAuditLogs);
+router.get('/audit-logs', verifyToken, authorizeRoles('Admin'), adminController.getAuditLogs);8
 
 // Users CRUD
 router.get('/users', adminController.getUsers);

@@ -25,7 +25,7 @@ const generateTicketNumber = async () => {
 exports.createTicket = async (req, res) => {
     const { title, description, category_id, priority } = req.body;
     const reporter_id = req.user.id;
-    const attachment_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const attachment_url = req.file ? (req.file.path || `/uploads/${req.file.filename}`) : null;
 
     if (!title || !description || !category_id) {
         return res.status(400).json({ message: 'Judul, deskripsi, dan kategori wajib diisi' });
@@ -162,6 +162,38 @@ exports.getTicketDetail = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Gagal mengambil detail ticket' });
+    }
+};
+
+exports.getTicketById = async (req, res) => {
+    const { id } = req.params;
+    const { id: userId, role } = req.user;
+
+    try {
+        const [tickets] = await db.query(
+            `SELECT t.*, u.full_name AS reporter_name, c.name AS category_name 
+             FROM tickets t
+             LEFT JOIN users u ON t.reporter_id = u.id
+             LEFT JOIN categories c ON t.category_id = c.id
+             WHERE t.id = ?`,
+            [id]
+        );
+
+        if (tickets.length === 0) {
+            return res.status(404).json({ message: 'Tiket tidak ditemukan' });
+        }
+
+        const ticket = tickets[0];
+
+        // PROTEKSI IDOR: Jika bukan Admin / IT Support, pastikan tiket ini milik si pelapor sendiri
+        if (role === 'Employee' && Number(ticket.reporter_id) !== Number(userId)) {
+            return res.status(403).json({ message: 'Akses ditolak: Anda tidak memiliki izin melihat tiket ini.' });
+        }
+
+        res.json(ticket);
+    } catch (error) {
+        console.error('Error Get Ticket Detail:', error);
+        res.status(500).json({ message: 'Gagal mengambil detail tiket' });
     }
 };
 
